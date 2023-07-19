@@ -1,0 +1,51 @@
+# Zainstaluj bibliotekę Kivy przed uruchomieniem tego kodu
+# pip install kivy
+
+import kivy
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from random import randint
+
+kivy.require('1.11.1')
+
+
+class AppZgadnijLiczbe(App):
+    def build(self):
+        self.tajna_liczba = randint(1, 100)
+        self.ilosc_prob = 0
+
+        self.uklad = BoxLayout(orientation='vertical')
+
+        self.etykieta = Label(text='Zgadnij liczbę od 1 do 100', font_size=30)
+        self.uklad.add_widget(self.etykieta)
+
+        self.etykieta_wejscia = Label(text='Podaj swój strzał:', font_size=25)
+        self.uklad.add_widget(self.etykieta_wejscia)
+
+        self.przycisk_wejscia = Button(text='Sprawdź', on_press=self.sprawdz_liczbe)
+        self.uklad.add_widget(self.przycisk_wejscia)
+
+        self.etuiketa_wyjscia = Label(text='', font_size=25)
+        self.uklad.add_widget(self.etuiketa_wyjscia)
+
+        return self.uklad
+
+    def sprawdz_liczbe(self, instancja):
+        try:
+            propozycja = int(self.przycisk_wejscia.text)
+            self.ilosc_prob += 1
+
+            if propozycja == self.tajna_liczba:
+                self.etuiketa_wyjscia.text = f'Brawo! Liczbę odgadłeś w {self.ilosc_prob} próbach.'
+            elif propozycja < self.tajna_liczba:
+                self.etuiketa_wyjscia.text = 'Nie, liczba jest większa.'
+            else:
+                self.etuiketa_wyjscia.text = 'Nie, liczba jest mniejsza.'
+        except ValueError:
+            self.etuiketa_wyjscia.text = 'Błąd! Podaj liczbę od 1 do 100.'
+
+
+if __name__ == '__main__':
+    AppZgadnijLiczbe().run()
