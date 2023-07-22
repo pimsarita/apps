@@ -1,0 +1,133 @@
+import android.app.Activity;
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.os.Bundle;
+import android.os.Handler;
+import android.view.View;
+
+public class SnakeGameActivity extends Activity {
+
+    private SnakeView snakeView;
+    private Handler handler = new Handler();
+    private final int UPDATE_DELAY = 200; // Częstotliwość aktualizacji ekranu (czas w milisekundach)
+    private boolean gameOver = false;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        snakeView = new SnakeView(this);
+        setContentView(snakeView);
+        startUpdateHandler();
+    }
+
+    private void startUpdateHandler() {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (!gameOver) {
+                    snakeView.update();
+                    handler.postDelayed(this, UPDATE_DELAY);
+                }
+            }
+        }, UPDATE_DELAY);
+    }
+
+    class SnakeView extends View {
+
+        private int screenWidth, screenHeight;
+        private final int CELL_SIZE = 50;
+        private final int NUM_CELLS_X = 10;
+        private final int NUM_CELLS_Y = 15;
+        private int snakeX, snakeY, foodX, foodY;
+        private int[] snakeXs, snakeYs;
+        private int snakeLength;
+        private Direction direction = Direction.RIGHT;
+        private Paint snakePaint, foodPaint, bgPaint;
+
+        public SnakeView(Context context) {
+            super(context);
+            snakePaint = new Paint();
+            snakePaint.setColor(Color.GREEN);
+            foodPaint = new Paint();
+            foodPaint.setColor(Color.RED);
+            bgPaint = new Paint();
+            bgPaint.setColor(Color.WHITE);
+            snakeXs = new int[NUM_CELLS_X * NUM_CELLS_Y];
+            snakeYs = new int[NUM_CELLS_X * NUM_CELLS_Y];
+            snakeLength = 1;
+            spawnFood();
+        }
+
+        private void spawnFood() {
+            foodX = (int) (Math.random() * NUM_CELLS_X) * CELL_SIZE;
+            foodY = (int) (Math.random() * NUM_CELLS_Y) * CELL_SIZE;
+        }
+
+        public void update() {
+            switch (direction) {
+                case UP:
+                    snakeY -= CELL_SIZE;
+                    break;
+                case DOWN:
+                    snakeY += CELL_SIZE;
+                    break;
+                case LEFT:
+                    snakeX -= CELL_SIZE;
+                    break;
+                case RIGHT:
+                    snakeX += CELL_SIZE;
+                    break;
+            }
+
+            // Sprawdź kolizje z jedzeniem
+            if (snakeX == foodX && snakeY == foodY) {
+                snakeLength++;
+                spawnFood();
+            }
+
+            // Sprawdź kolizje ze ścianami
+            if (snakeX < 0 || snakeX >= screenWidth || snakeY < 0 || snakeY >= screenHeight) {
+                gameOver = true;
+                return;
+            }
+
+            // Sprawdź kolizje z samym sobą
+            for (int i = snakeLength - 1; i > 0; i--) {
+                if (snakeX == snakeXs[i] && snakeY == snakeYs[i]) {
+                    gameOver = true;
+                    return;
+                }
+                snakeXs[i] = snakeXs[i - 1];
+                snakeYs[i] = snakeYs[i - 1];
+            }
+
+            snakeXs[0] = snakeX;
+            snakeYs[0] = snakeY;
+            invalidate();
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            screenWidth = getWidth();
+            screenHeight = getHeight();
+
+            // Rysowanie tła
+            canvas.drawRect(0, 0, screenWidth, screenHeight, bgPaint);
+
+            // Rysowanie jedzenia
+            canvas.drawRect(foodX, foodY, foodX + CELL_SIZE, foodY + CELL_SIZE, foodPaint);
+
+            // Rysowanie węża
+            for (int i = 0; i < snakeLength; i++) {
+                canvas.drawRect(snakeXs[i], snakeYs[i], snakeXs[i] + CELL_SIZE, snakeYs[i] + CELL_SIZE, snakePaint);
+            }
+        }
+    }
+
+    enum Direction {
+        UP, DOWN, LEFT, RIGHT
+    }
+}
